@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.json({ status: "PrimeBasket API running" });
+});
+
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
 
