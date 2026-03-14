@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "title": "Ultra-Slim Laptop Pro 14\"",
+    "category": "Electronics",
+    "price": 129999,
+    "oldPrice": 149999,
+    "rating": 4.9,
+    "reviews": 1876,
+    "badge": "New",
+    "discount": "-13%",
+    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8"
+  },
+  {
+    "id": 2,
+    "title": "Wireless Noise-Cancelling Headphones",
+    "category": "Electronics",
+    "price": 24999,
+    "oldPrice": 34999,
+    "rating": 4.8,
+    "reviews": 2341,
+    "badge": "Best Seller",
+    "discount": "-29%",
+    "image": "https://images.unsplash.com/photo-1518441902110-36a1b82c4c65"
+  },
+  {
+    "id": 3,
+    "title": "Artisan Coffee Maker",
+    "category": "Home & Kitchen",
+    "price": 24999,
+    "rating": 4.8,
+    "reviews": 978,
+    "image": "https://images.unsplash.com/photo-1509042239860-f550ce710b93"
+  },
+  {
+    "id": 4,
+    "title": "Smart Fitness Watch",
+    "category": "Accessories",
+    "price": 19999,
+    "oldPrice": 22999,
+    "rating": 4.6,
+    "reviews": 512,
+    "badge": "Trending",
+    "discount": "-11%",
+    "image": "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b"
+  },
+  {
+    "id": 5,
+    "title": "Nike Running Shoes",
+    "category": "Fashion",
+    "price": 17999,
+    "oldPrice": 22999,
+    "rating": 4.7,
+    "reviews": 754,
+    "badge": "Popular",
+    "discount": "-20%",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff"
+  },
+  {
+    "id": 6,
+    "title": "Luxury Leather Bag",
+    "category": "Fashion",
+    "price": 49999,
+    "oldPrice": 65999,
+    "rating": 4.5,
+    "reviews": 331,
+    "discount": "-24%",
+    "image": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f"
+  }
+]
