@@ -33,44 +33,62 @@ router.post("/add", async (req, res) => {
 
   const { userId, product } = req.body;
 
-  const { data: existing } = await supabase
-    .from("cart")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("product_id", product.id)
-    .single();
+  try {
 
-  if (existing) {
+    const { data: existing } = await supabase
+      .from("cart")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("product_id", product.id)
+      .maybeSingle();   // safer than single()
 
+    // If product already exists in cart
+    if (existing) {
+
+      const { data, error } = await supabase
+        .from("cart")
+        .update({
+          quantity: existing.quantity + 1
+        })
+        .eq("id", existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json(error);
+      }
+
+      return res.json(data);
+
+    }
+
+    // Insert new product
     const { data, error } = await supabase
       .from("cart")
-      .update({
-        quantity: existing.quantity + 1
+      .insert({
+        user_id: userId,
+        product_id: Number(product.id),
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        quantity: 1
       })
-      .eq("id", existing.id)
-      .select();
+      .select()
+      .single();
 
-    if (error) return res.status(500).json(error);
+    if (error) {
+      return res.status(500).json(error);
+    }
 
-    return res.json(data);
+    res.json(data);
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json({ error: "Cart add failed" });
 
   }
-
-  const { data, error } = await supabase
-    .from("cart")
-    .insert({
-      user_id: userId,
-      product_id: product.id,
-      title: product.title,
-      price: product.price,
-      image: product.image,
-      quantity: 1
-    })
-    .select();
-
-  if (error) return res.status(500).json(error);
-
-  res.json(data);
 
 });
 
@@ -83,15 +101,28 @@ router.delete("/:userId/:productId", async (req, res) => {
 
   const { userId, productId } = req.params;
 
-  const { error } = await supabase
-    .from("cart")
-    .delete()
-    .eq("user_id", userId)
-    .eq("product_id", productId);
+  try {
 
-  if (error) return res.status(500).json(error);
+    const { error } = await supabase
+      .from("cart")
+      .delete()
+      .eq("user_id", userId)
+      .eq("product_id", Number(productId));   // force number
 
-  res.json({ message: "Item removed" });
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    res.json({
+      message: "Item removed"
+    });
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json({ error: "Delete failed" });
+
+  }
 
 });
 
@@ -104,14 +135,27 @@ router.delete("/clear/:userId", async (req, res) => {
 
   const { userId } = req.params;
 
-  const { error } = await supabase
-    .from("cart")
-    .delete()
-    .eq("user_id", userId);
+  try {
 
-  if (error) return res.status(500).json(error);
+    const { error } = await supabase
+      .from("cart")
+      .delete()
+      .eq("user_id", userId);
 
-  res.json({ message: "Cart cleared" });
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    res.json({
+      message: "Cart cleared"
+    });
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json({ error: "Clear cart failed" });
+
+  }
 
 });
 
