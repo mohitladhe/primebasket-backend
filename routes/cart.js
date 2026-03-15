@@ -1,60 +1,95 @@
 const express = require("express");
 const router = express.Router();
-
 const supabase = require("../config/supabase");
 
+
 /*
+==============================
 GET USER CART
+==============================
 */
 
 router.get("/:userId", async (req, res) => {
 
-  const { userId } = req.params;
+  try {
 
-  const { data, error } = await supabase
-    .from("cart")
-    .select("*")
-    .eq("user_id", userId);
+    const { userId } = req.params;
 
-  if (error) {
-    return res.status(500).json(error);
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    const { data, error } = await supabase
+      .from("cart")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Fetch cart error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json(data || []);
+
+  } catch (err) {
+
+    console.error("Server error:", err);
+    res.status(500).json({ error: "Server error" });
+
   }
-
-  res.json(data);
 
 });
 
 
 /*
+==============================
 ADD TO CART
+==============================
 */
 
 router.post("/add", async (req, res) => {
 
-  const { userId, product } = req.body;
-
   try {
 
-    const { data: existing } = await supabase
+    const { userId, product } = req.body;
+
+    if (!userId || !product || !product.id) {
+      return res.status(400).json({
+        error: "Invalid request body"
+      });
+    }
+
+    const productId = Number(product.id);
+
+    // check if item already exists
+
+    const { data: existing, error: fetchError } = await supabase
       .from("cart")
       .select("*")
       .eq("user_id", userId)
-      .eq("product_id", product.id)
-      .maybeSingle();   // safer than single()
+      .eq("product_id", productId)
+      .limit(1);
 
-    // If product already exists in cart
-    if (existing) {
+    if (fetchError) {
+      console.error("Fetch error:", fetchError);
+      return res.status(500).json(fetchError);
+    }
+
+    if (existing && existing.length > 0) {
+
+      const item = existing[0];
 
       const { data, error } = await supabase
         .from("cart")
         .update({
-          quantity: existing.quantity + 1
+          quantity: item.quantity + 1
         })
-        .eq("id", existing.id)
+        .eq("id", item.id)
         .select()
         .single();
 
       if (error) {
+        console.error("Update error:", error);
         return res.status(500).json(error);
       }
 
@@ -62,12 +97,13 @@ router.post("/add", async (req, res) => {
 
     }
 
-    // Insert new product
+    // insert new product
+
     const { data, error } = await supabase
       .from("cart")
       .insert({
         user_id: userId,
-        product_id: Number(product.id),
+        product_id: productId,
         title: product.title,
         price: product.price,
         image: product.image,
@@ -78,6 +114,7 @@ router.post("/add", async (req, res) => {
       .single();
 
     if (error) {
+      console.error("Insert error:", error);
       return res.status(500).json(error);
     }
 
@@ -85,8 +122,10 @@ router.post("/add", async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
-    res.status(500).json({ error: "Cart add failed" });
+    console.error("Cart add failed:", err);
+    res.status(500).json({
+      error: "Cart add failed"
+    });
 
   }
 
@@ -94,22 +133,25 @@ router.post("/add", async (req, res) => {
 
 
 /*
+==============================
 REMOVE ITEM
+==============================
 */
 
 router.delete("/:userId/:productId", async (req, res) => {
 
-  const { userId, productId } = req.params;
-
   try {
+
+    const { userId, productId } = req.params;
 
     const { error } = await supabase
       .from("cart")
       .delete()
       .eq("user_id", userId)
-      .eq("product_id", Number(productId));   // force number
+      .eq("product_id", Number(productId));
 
     if (error) {
+      console.error("Delete error:", error);
       return res.status(500).json(error);
     }
 
@@ -119,8 +161,10 @@ router.delete("/:userId/:productId", async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Delete failed:", err);
+    res.status(500).json({
+      error: "Delete failed"
+    });
 
   }
 
@@ -128,14 +172,16 @@ router.delete("/:userId/:productId", async (req, res) => {
 
 
 /*
+==============================
 CLEAR CART
+==============================
 */
 
 router.delete("/clear/:userId", async (req, res) => {
 
-  const { userId } = req.params;
-
   try {
+
+    const { userId } = req.params;
 
     const { error } = await supabase
       .from("cart")
@@ -143,6 +189,7 @@ router.delete("/clear/:userId", async (req, res) => {
       .eq("user_id", userId);
 
     if (error) {
+      console.error("Clear cart error:", error);
       return res.status(500).json(error);
     }
 
@@ -152,8 +199,10 @@ router.delete("/clear/:userId", async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
-    res.status(500).json({ error: "Clear cart failed" });
+    console.error("Clear cart failed:", err);
+    res.status(500).json({
+      error: "Clear cart failed"
+    });
 
   }
 
