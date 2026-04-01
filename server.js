@@ -3,7 +3,7 @@ const cors = require("cors");
 
 const cartRoutes = require("./routes/cart");
 const productRoutes = require("./routes/products");
-
+const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
 
@@ -16,6 +16,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "PrimeBasket Backend running" });

@@ -107,5 +107,81 @@ router.post("/add", async (req, res) => {
 
 });
 
+//UPDATE PRODUCT
+router.put("/:id", async (req, res) => {
+
+  const { id } = req.params;
+  const { userId, ...updates } = req.body;
+
+  try {
+
+    // 🔐 CHECK ADMIN
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const { data, error } = await supabase
+      .from("products")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json({ error: "Update failed" });
+
+  }
+
+});
+
+//DELETE PRODUCT
+router.delete("/:id", async (req, res) => {
+
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  try {
+
+    // 🔐 CHECK ADMIN
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    res.json({ message: "Deleted successfully" });
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json({ error: "Delete failed" });
+
+  }
+
+});
+
 
 module.exports = router;
