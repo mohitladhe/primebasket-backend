@@ -1,12 +1,9 @@
 const express = require("express");
-const multer = require("multer");
 const supabase = require("../config/supabase");
 
+console.log("Admin routes loaded");
+
 const router = express.Router();
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
 
 const checkAdmin = async (userId) => {
   if (!userId) return false;
@@ -23,74 +20,128 @@ const checkAdmin = async (userId) => {
 
 router.get("/products", async (req, res) => {
   try {
+    console.log("Fetching products...");
+
     const { data, error } = await supabase
       .from("products")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Fetch products error:", error);
-      return res.status(500).json({ error: "Failed to fetch products" });
+      console.error("Supabase fetch error:", error);
+
+      return res.status(500).json({
+        error: error.message,
+        details: error,
+      });
     }
 
-    res.json({ products: data });
+    console.log("Products fetched:", data?.length);
+
+    res.json({ products: data || [] });
+
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("SERVER CRASH:", err);
+
+    res.status(500).json({
+      error: err.message,
+      stack: err.stack,
+    });
   }
 });
 
-router.post("/upload", upload.single("image"), async (req, res) => {
-  try {
-    const { userId } = req.body;
+router.post("/upload", async (req, res) => {
+  const multer = require("multer");
 
-    console.log("Upload request received. UserId:", userId, "File:", req.file?.originalname);
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }).single("image");
 
-    if (!req.file) {
-      console.error("No file provided");
-      return res.status(400).json({ error: "No image file uploaded" });
-    }
+  upload(req, res, async (err) => {
+    try {
+      if (err) {
+        console.error("Multer error:", err);
 
-    if (!userId) {
-      console.error("No userId provided");
-      return res.status(401).json({ error: "User ID is required" });
-    }
+        return res.status(400).json({
+          error: err.message || "File upload failed",
+        });
+      }
 
-    const isAdmin = await checkAdmin(userId);
-    if (!isAdmin) {
-      console.error("User is not admin:", userId);
-      return res.status(403).json({ error: "Not authorized - admin access required" });
-    }
+      const { userId } = req.body;
 
-    const filePath = `products/${Date.now()}-${req.file.originalname}`;
-    console.log("Uploading to Supabase at path:", filePath);
+      console.log(
+        "Upload request received. UserId:",
+        userId,
+        "File:",
+        req.file?.originalname
+      );
 
-    const { error: uploadError } = await supabase.storage
-      .from("product-images")
-      .upload(filePath, req.file.buffer, {
-        contentType: req.file.mimetype,
-        cacheControl: "3600",
-        upsert: false,
+      if (!req.file) {
+        console.error("No file provided");
+
+        return res.status(400).json({
+          error: "No image file uploaded",
+        });
+      }
+
+      if (!userId) {
+        console.error("No userId provided");
+
+        return res.status(401).json({
+          error: "User ID is required",
+        });
+      }
+
+      const isAdmin = await checkAdmin(userId);
+
+      if (!isAdmin) {
+        console.error("User is not admin:", userId);
+
+        return res.status(403).json({
+          error: "Not authorized - admin access required",
+        });
+      }
+
+      const filePath = `products/${Date.now()}-${req.file.originalname}`;
+
+      console.log("Uploading to Supabase at path:", filePath);
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, req.file.buffer, {
+          contentType: req.file.mimetype,
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
+
+        return res.status(500).json({
+          error: uploadError.message || "Image upload failed",
+          details: uploadError.toString(),
+        });
+      }
+
+      const { data } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      console.log("Upload successful. Public URL:", data.publicUrl);
+
+      res.json({
+        publicUrl: data.publicUrl,
       });
 
-    if (uploadError) {
-      console.error("Supabase upload error:", uploadError);
-      return res.status(500).json({ 
-        error: uploadError.message || "Image upload failed",
-        details: uploadError.toString()
+    } catch (err) {
+      console.error("Upload server error:", err);
+
+      res.status(500).json({
+        error: err.message || "Upload failed",
       });
     }
-
-    const { data } = supabase.storage
-      .from("product-images")
-      .getPublicUrl(filePath);
-
-    console.log("Upload successful. Public URL:", data.publicUrl);
-    res.json({ publicUrl: data.publicUrl });
-  } catch (err) {
-    console.error("Upload server error:", err);
-    res.status(500).json({ error: err.message || "Upload failed" });
-  }
+  });
 });
 
 router.post("/products", async (req, res) => {
