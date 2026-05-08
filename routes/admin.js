@@ -55,7 +55,7 @@ router.post("/upload", async (req, res) => {
 
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: 2 * 1024 * 1024 },
   }).single("image");
 
   upload(req, res, async (err) => {
@@ -111,7 +111,7 @@ router.post("/upload", async (req, res) => {
         .from("product-images")
         .upload(filePath, req.file.buffer, {
           contentType: req.file.mimetype,
-          cacheControl: "3600",
+          cacheControl: "31536000",
           upsert: false,
         });
 
