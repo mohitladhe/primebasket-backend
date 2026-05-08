@@ -6,6 +6,10 @@ const cartRoutes = require("./routes/cart");
 const productRoutes = require("./routes/products");
 const dashboardRoutes = require("./routes/dashboard");
 const adminRoutes = require("./routes/admin");
+const authRoutes = require("./routes/auth");
+const addressesRoutes = require("./routes/addresses");
+const ordersRoutes = require("./routes/orders");
+const profileRoutes = require("./routes/profile");
 
 const app = express();
 
@@ -47,6 +51,10 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/auth",authRoutes);
+app.use("/api/addresses", addressesRoutes);
+app.use("/api/orders", ordersRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
