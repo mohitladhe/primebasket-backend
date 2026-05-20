@@ -15,7 +15,7 @@ const app = express();
 
 // Production-ready CORS configuration
 const allowedOrigins = [
-  "https://primebasket-web.vercel.app",
+  "https://primebasket-web.vercel.app/",
   "http://localhost:5173", // Development
   "http://localhost:3000"   // Development
 ];
